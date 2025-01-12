@@ -1,0 +1,63 @@
+<!-- templates/doctor/treatments.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-2xl font-bold mb-4">Manage Treatments</h2>
+    
+    <!-- Add Treatment Form -->
+    <form method="POST" class="mb-8">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Treatment Name</label>
+                <input type="text" name="name" required class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Price</label>
+                <input type="number" name="price" step="0.01" required class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Duration (minutes)</label>
+                <input type="number" name="duration" required class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Description</label>
+                <textarea name="description" class="w-full p-2 border rounded"></textarea>
+            </div>
+        </div>
+        <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Add Treatment
+        </button>
+    </form>
+
+    <!-- Treatments List -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th class="text-left p-2">Name</th>
+                    <th class="text-left p-2">Description</th>
+                    <th class="text-left p-2">Price</th>
+                    <th class="text-left p-2">Duration</th>
+                    <th class="text-left p-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for treatment in treatments %}
+                <tr>
+                    <td class="p-2">{{ treatment.name }}</td>
+                    <td class="p-2">{{ treatment.description }}</td>
+                    <td class="p-2">${{ "%.2f"|format(treatment.price) }}</td>
+                    <td class="p-2">{{ treatment.duration }} min</td>
+                    <td class="p-2">
+                        <button onclick="editTreatment('{{ treatment._id }}')" 
+                                class="text-blue-600 hover:text-blue-800">Edit</button>
+                        <button onclick="deleteTreatment('{{ treatment._id }}')"
+                                class="text-red-600 hover:text-red-800 ml-2">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!-- templates/register.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow p-6">
+    <h2 class="text-2xl font-bold mb-4">Register</h2>
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Name</label>
+            <input type="text" name="name" required 
+                   class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input type="email" name="email" required 
+                   class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Role</label>
+            <select name="role" required class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="doctor">Doctor</option>
+                <option value="accountant">Accountant</option>
+            </select>
+        </div>
+        <div class="mb-4 doctor-field">
+            <label class="block text-sm font-medium mb-1">Specialization</label>
+            <input type="text" name="specialization" 
+                   class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <input type="password" name="password" required 
+                   class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <button type="submit" 
+                class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Register
+        </button>
+    </form>
+    <p class="mt-4 text-center">
+        Already have an account? 
+        <a href="{{ url_for('login') }}" class="text-blue-600 hover:text-blue-800">Login here</a>
+    </p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.querySelector('select[name="role"]');
+    const specializationField = document.querySelector('.doctor-field');
+    
+    function toggleSpecialization() {
+        if (roleSelect.value === 'doctor') {
+            specializationField.style.display = 'block';
+            specializationField.querySelector('input').required = true;
+        } else {
+            specializationField.style.display = 'none';
+            specializationField.querySelector('input').required = false;
+        }
+    }
+    
+    roleSelect.addEventListener('change', toggleSpecialization);
+    toggleSpecialization(); // Run on initial load
+});
+</script>
+{% endblock %}

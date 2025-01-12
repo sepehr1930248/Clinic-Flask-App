@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Patient Details</h2>
+        <div class="space-x-3">
+            <a href="{{ url_for('patient.edit_patient', patient_id=patient.patient_id) }}" 
+               class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Edit Patient</a>
+            <a href="{{ url_for('home') }}" 
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Basic Information</h3>
+                <div class="space-y-2">
+                    <p><span class="font-medium">Patient ID:</span> {{ patient.patient_id }}</p>
+                    <p><span class="font-medium">Full Name:</span> {{ patient.name }}</p>
+                    <p><span class="font-medium">Phone Number:</span> {{ patient.phone }}</p>
+                    <p><span class="font-medium">Birth Date:</span> 
+                        {{ patient.birth_date.strftime('%Y-%m-%d') if patient.birth_date else 'N/A' }}</p>
+                    <p><span class="font-medium">Doctor:</span> {{ patient.doctor_name }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Expert Details</h3>
+                <div class="space-y-2">
+                    <p><span class="font-medium">Last Visit:</span> 
+                        {{ patient.expert_details.last_visit.strftime('%Y-%m-%d') if patient.expert_details.last_visit else 'N/A' }}</p>
+                    <p><span class="font-medium">Therapy Method:</span> 
+                        {{ patient.expert_details.therapy_method or 'Not specified' }}</p>
+                    <p><span class="font-medium">Prescribed Medicine:</span> 
+                        {{ patient.expert_details.medicine or 'None prescribed' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-900 mb-3">Medical Notes</h3>
+            <div class="bg-white p-3 rounded border border-gray-200">
+                {% if patient.expert_details.notes %}
+                    {{ patient.expert_details.notes|nl2br }}
+                {% else %}
+                    <p class="text-gray-500 italic">No notes available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900 mb-3">Visit History</h3>
+        <div class="bg-gray-50 p-4 rounded-lg">
+            {% if patient.visit_history|default(false) %}
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Treatment</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for visit in patient.visit_history %}
+                        <tr>
+                            <td class="px-4 py-2">{{ visit.date.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-4 py-2">{{ visit.treatment }}</td>
+                            <td class="px-4 py-2">{{ visit.notes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-gray-500 italic">No visit history available</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Add this section to patient_details.html before the closing div -->
+<div class="mt-6 pt-6 border-t border-gray-200">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Appointments</h3>
+        <button onclick="showAddAppointment('{{ patient.patient_id }}')"
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Add Appointment
+        </button>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg">
+        {% if appointments %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                        <th class="px-4 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for appt in appointments %}
+                    <tr>
+                        <td class="px-4 py-2">{{ appt.date.strftime('%Y-%m-%d') }}</td>
+                        <td class="px-4 py-2">{{ appt.time }}</td>
+                        <td class="px-4 py-2">{{ appt.duration }} min</td>
+                        <td class="px-4 py-2 text-right">
+                            <button onclick="editAppointment('{{ appt._id }}')"
+                                    class="text-green-600 hover:text-green-800 mx-2">Edit</button>
+                            <button onclick="confirmDelete('{{ appt._id }}')"
+                                    class="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-gray-500 italic">No appointments scheduled</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add this modal to both patient_details.html and schedule.html -->
+<div id="appointmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-xl w-96">
+        <h3 class="text-lg font-medium mb-4">
+            <span id="modalTitle">Add Appointment</span>
+        </h3>
+        <form id="appointmentForm" onsubmit="handleAppointmentSubmit(event)">
+            <input type="hidden" name="appointment_id" id="appointment_id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Date</label>
+                    <input type="date" name="date" id="appt_date" required
+                           class="w-full border rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Time</label>
+                    <select name="time" id="appt_time" required
+                            class="w-full border rounded p-2">
+                        {% for h in range(8, 24) %}
+                            {% for m in ['00', '30'] %}
+                                <option value="{{ '%02d' % h }}:{{ m }}">{{ '%02d' % h }}:{{ m }}</option>
+                            {% endfor %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Duration</label>
+                    <select name="duration" id="appt_duration" required
+                            class="w-full border rounded p-2">
+                        <option value="30">30 minutes</option>
+                        <option value="60">60 minutes</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="hideModal()"
+                        class="px-4 py-2 border rounded">Cancel</button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add this script section to both templates -->
+<script>
+async function handleAppointmentSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const appointmentId = document.getElementById('appointment_id').value;
+    
+    try {
+        const url = appointmentId ? 
+            `/appointment/edit/${appointmentId}` : 
+            '/appointment/add';
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const data = await response.json();
+            alert(`Error: ${data.message}`);
+        }
+    } catch (error) {
+        alert('Error processing appointment');
+    }
+}
+
+async function confirmDelete(appointmentId) {
+    if (confirm('Are you sure you want to delete this appointment?')) {
+        try {
+            const response = await fetch(`/appointment/delete/${appointmentId}`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                alert(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            alert('Error deleting appointment');
+        }
+    }
+}
+
+function showAddAppointment(patientId = null) {
+    document.getElementById('modalTitle').textContent = 'Add Appointment';
+    document.getElementById('appointment_id').value = '';
+    document.getElementById('appointmentForm').reset();
+    if (patientId) {
+        document.getElementById('patient_id').value = patientId;
+    }
+    document.getElementById('appointmentModal').classList.remove('hidden');
+}
+
+function hideModal() {
+    document.getElementById('appointmentModal').classList.add('hidden');
+}
+</script>
+</div>
+{% endblock %}

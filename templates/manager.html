@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-xl font-semibold text-gray-800">Manager Dashboard</div>
+                <div>
+                    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto mt-8 px-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-bold mb-6">Pending Approvals</h2>
+            
+            {% if accountants %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for accountant in accountants %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ accountant.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ accountant.email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ accountant.role }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <form method="POST" action="{{ url_for('approved_by_manager') }}" class="inline">
+                                    <input type="hidden" name="accountant_id" value="{{ accountant._id }}">
+                                    <button type="submit" name="action" value="approve" 
+                                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mr-2">
+                                        Approve
+                                    </button>
+                                    <button type="submit" name="action" value="reject" 
+                                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                                        Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No pending approvals at this time.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Add New Patient</h2>
+        <a href="{{ url_for('home') }}" 
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition duration-200 ease-in-out">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Form Section -->
+    <form method="POST" action="{{ url_for('patient.add_patient') }}" class="space-y-6">
+        <!-- Grid Layout for Basic Information and Expert Details -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Basic Information Section -->
+            <div class="bg-gray-100 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" name="name" required
+                               class="mt-1 block w-full rounded-md border-gray-800 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" name="phone" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
+                        <input type="date" name="birth_date" required
+                               class="mt-1 bg-white block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Doctor</label>
+                        {% if current_user.role == 'accountant' %}
+                            <select name="doctor_id" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                                <option value="">Select a Doctor</option>
+                                {% for doctor in doctors %}
+                                    <option value="{{ doctor._id }}">Dr. {{ doctor.name }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input type="text" name="doctor_name" required readonly
+                                   value="{{ current_user.name }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm cursor-not-allowed">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expert Details Section -->
+            <div class="bg-gray-100 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expert Details</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Visit</label>
+                        <input type="date" name="last_visit"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Therapy Method</label>
+                        <input type="text" name="therapy_method"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prescribed Medicine</label>
+                        <input type="text" name="medicine"
+                               class="mt-1  block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Notes Section -->
+        <div class="bg-gray-100 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Medical Notes</h3>
+            <textarea name="notes" rows="4"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200 ease-in-out"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end">
+            <button type="submit" 
+                    class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition duration-200 ease-in-out transform hover:scale-105">
+                Add Patient
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

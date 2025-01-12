@@ -1,0 +1,262 @@
+<!-- Visit Modal -->
+<div id="visitModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-white rounded-lg w-full max-w-4xl mx-4 my-8">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-6 border-b">
+            <h2 class="text-2xl font-semibold text-gray-800">Patient Visit - {{ patient.name }}</h2>
+            <div class="flex gap-2">
+                {% if appointment.status != 'completed' %}
+                <button onclick="endAppointment('{{ appointment._id }}')" 
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                    End Visit
+                </button>
+                {% endif %}
+                <button onclick="closeVisitModal()" 
+                        class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-6">
+            <!-- Tabs -->
+            <div class="mb-6 border-b">
+                <nav class="flex space-x-6" aria-label="Tabs">
+                    <button onclick="switchVisitTab('receipts')" 
+                            class="visit-tab-button px-4 py-2 border-b-2 border-transparent hover:border-gray-300"
+                            data-tab="receipts">
+                        Receipts
+                    </button>
+                    <button onclick="switchVisitTab('notes')" 
+                            class="visit-tab-button px-4 py-2 border-b-2 border-transparent hover:border-gray-300"
+                            data-tab="notes">
+                        Visit Notes
+                    </button>
+                    <button onclick="switchVisitTab('billing')" 
+                            class="visit-tab-button px-4 py-2 border-b-2 border-transparent hover:border-gray-300"
+                            data-tab="billing">
+                        Billing
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Receipts Tab -->
+            <div id="receiptsTab" class="visit-tab-content">
+                <!-- Add Receipt Form -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-medium mb-4">Add New Receipt</h3>
+                    <form id="receiptForm" class="space-y-4">
+                        <div id="itemsContainer">
+                            <div class="flex gap-4 items-center mb-2">
+                                <input type="text" name="items[]" placeholder="Item description" 
+                                       class="flex-1 p-2 border rounded-lg">
+                                <input type="number" name="amounts[]" placeholder="Amount" step="0.01"
+                                       class="w-32 p-2 border rounded-lg">
+                                <button type="button" onclick="removeReceiptItem(this)"
+                                        class="text-red-500 hover:text-red-700">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" onclick="addReceiptItem()"
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            Add Item
+                        </button>
+                        <textarea name="comment" placeholder="Receipt comments..."
+                                  class="w-full p-3 border rounded-lg"></textarea>
+                        <button type="submit" 
+                                class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+                            Save Receipt
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Receipt History -->
+                <div class="space-y-4">
+                    <h3 class="font-medium mb-4">Receipt History</h3>
+                    {% for receipt in previous_receipts %}
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">Date: {{ receipt.created_at.strftime('%B %d, %Y') }}</span>
+                            <span class="text-gray-600">Total: ${{ "%.2f"|format(receipt.total_amount) }}</span>
+                        </div>
+                        {% if receipt.comment %}
+                        <p class="text-sm text-gray-600 mt-2">{{ receipt.comment }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('doctor.receipt.view_receipt', receipt_id=receipt._id) }}"
+                           class="text-blue-500 hover:text-blue-700 text-sm inline-block mt-2">
+                            View Details
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Notes Tab -->
+            <div id="notesTab" class="visit-tab-content hidden">
+                <div class="space-y-6">
+                    <!-- Add Note Form -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <textarea id="visitNotes" class="w-full p-3 border rounded-lg" rows="4" 
+                                  placeholder="Add notes about the current visit..."></textarea>
+                        <button onclick="saveVisitNotes()" 
+                                class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            Save Notes
+                        </button>
+                    </div>
+
+                    <!-- Previous Notes -->
+                    <div class="space-y-4">
+                        <h3 class="font-medium mb-2">Previous Visit Notes</h3>
+                        {% for visit in visit_history %}
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between mb-2">
+                                <span class="font-medium">{{ visit.date.strftime('%B %d, %Y') }}</span>
+                                <span class="text-sm text-gray-500">Dr. {{ visit.doctor_name }}</span>
+                            </div>
+                            <p class="text-gray-600">{{ visit.notes }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Tab -->
+            <div id="billingTab" class="visit-tab-content hidden">
+                <!-- Billing Summary -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-green-800 mb-1">Total Paid</h4>
+                        <p class="text-2xl font-bold text-green-600">
+                            ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'paid')|sum(attribute='amount')) }}
+                        </p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-yellow-800 mb-1">Pending</h4>
+                        <p class="text-2xl font-bold text-yellow-600">
+                            ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'pending')|sum(attribute='amount')) }}
+                        </p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-red-800 mb-1">Overdue</h4>
+                        <p class="text-2xl font-bold text-red-600">
+                            ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'overdue')|sum(attribute='amount')) }}
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-800 mb-1">Total</h4>
+                        <p class="text-2xl font-bold text-gray-600">
+                            ${{ "%.2f"|format(billings|sum(attribute='amount')) }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Billing Records -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Treatment</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for billing in billings %}
+                            <tr>
+                                <td class="px-6 py-4">{{ billing.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td class="px-6 py-4">{{ billing.treatment_name }}</td>
+                                <td class="px-6 py-4">${{ "%.2f"|format(billing.amount) }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 text-sm rounded-full
+                                        {% if billing.status == 'paid' %}bg-green-100 text-green-800
+                                        {% elif billing.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ billing.status|title }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <button onclick="editBilling('{{ billing._id }}')"
+                                            class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                    <button onclick="deleteBilling('{{ billing._id }}')"
+                                            class="text-red-600 hover:text-red-900">Delete</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Required JavaScript -->
+<script>
+function openVisitModal() {
+    document.getElementById('visitModal').classList.remove('hidden');
+}
+
+function closeVisitModal() {
+    document.getElementById('visitModal').classList.add('hidden');
+}
+
+function switchVisitTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.visit-tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.visit-tab-button').forEach(button => {
+        button.classList.remove('border-blue-500');
+        button.classList.add('border-transparent');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + 'Tab').classList.remove('hidden');
+    
+    // Activate selected tab button
+    document.querySelector(`[data-tab="${tabName}"]`).classList.remove('border-transparent');
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('border-blue-500');
+}
+
+// Receipt functionality
+function addReceiptItem() {
+    const container = document.getElementById('itemsContainer');
+    const newItem = document.createElement('div');
+    newItem.className = 'flex gap-4 items-center mb-2';
+    newItem.innerHTML = `
+        <input type="text" name="items[]" placeholder="Item description" 
+               class="flex-1 p-2 border rounded-lg">
+        <input type="number" name="amounts[]" placeholder="Amount" step="0.01"
+               class="w-32 p-2 border rounded-lg">
+        <button type="button" onclick="removeReceiptItem(this)"
+                class="text-red-500 hover:text-red-700">
+            Remove
+        </button>
+    `;
+    container.appendChild(newItem);
+}
+
+function removeReceiptItem(button) {
+    const container = document.getElementById('itemsContainer');
+    if (container.children.length > 1) {
+        button.parentElement.remove();
+    }
+}
+
+// Initialize modal with first tab active
+document.addEventListener('DOMContentLoaded', function() {
+    const firstTab = document.querySelector('.visit-tab-button');
+    if (firstTab) {
+        firstTab.classList.remove('border-transparent');
+        firstTab.classList.add('border-blue-500');
+    }
+});
+</script>

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mx-auto p-8">
+        <h1 class="text-2xl font-bold mb-8">Receipts and Billings for {{ patient.name }}</h1>
+
+        <!-- Receipts Section -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Receipts</h2>
+            <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Receipt ID</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Date</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Total Amount</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for receipt in receipts %}
+                    <tr>
+                        <td class="px-6 py-4">{{ receipt._id }}</td>
+                        <td class="px-6 py-4">{{ receipt.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-4">${{ receipt.total_amount }}</td>
+                        <td class="px-6 py-4">{{ receipt.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Billings Section -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Billings</h2>
+            <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Billing ID</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Date</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Amount</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for billing in billings %}
+                    <tr>
+                        <td class="px-6 py-4">{{ billing._id }}</td>
+                        <td class="px-6 py-4">{{ billing.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-4">${{ billing.amount }}</td>
+                        <td class="px-6 py-4">{{ billing.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Total Amount -->
+        <div class="mt-8">
+            <p class="text-lg font-semibold">Total Amount for All Receipts: ${{ total_amount }}</p>
+        </div>
+    </div>
+
+    {% endblock %}

@@ -1,0 +1,476 @@
+<!-- templates/doctor/visit.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Patient Summary Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-800">Patient Visit - {{ patient.name }}</h2>
+            <div class="flex gap-2">
+                {% if appointment.status != 'completed' %}
+                <button onclick="endAppointment('{{ appointment._id }}')" 
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                    End Appointment
+                </button>
+                <a href="{{ url_for('doctor.receipt.manage_receipt', appointment_id=appointment._id) }}" 
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+                 Create Receipt
+             </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="mb-6">
+            <div class="border-b border-gray-300">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button onclick="switchTab('receipt')" class="tab-button active" data-tab="receipt">
+                        Receipt
+                    </button>
+                    <button onclick="switchTab('visit')" class="tab-button active" data-tab="visit">
+                        Visit Notes
+                    </button>
+                    <button onclick="switchTab('billing')" class="tab-button" data-tab="billing">
+                        Billing
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+                <!-- Receipt Tab Content -->
+                <div id="receiptTab" class="tab-content active">
+                    <!-- Add New Receipt Form -->
+                    {% if appointment.status != 'completed' %}
+                    <div class="bg-white p-6 rounded-lg  shadow mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Create New Receipt</h3>
+                        <form action="{{ url_for('doctor.receipt.manage_receipt', appointment_id=appointment._id) }}" method="POST">
+                            <div id="receiptItems" class="space-y-4 mb-4 border-gray-400">
+                                <div class="receipt-item flex gap-4">
+                                    <div class="flex-1">
+                                        <input type="text" name="items[]" class="w-full p-2 border rounded border-gray-400" 
+                                            placeholder="Item description" required>
+                                    </div>
+                                    <div class="w-32">
+                                        <input type="number" name="amounts[]" step="0.01" class="w-full p-2 border rounded border-gray-400" 
+                                            placeholder="Amount" required>
+                                    </div>
+                                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeReceiptItem(this)">
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button type="button" onclick="addReceiptItem()" 
+                                    class="mb-4 text-blue-500 hover:text-blue-700 flex items-center gap-2">
+                                <span>Add Item</span>
+                            </button>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2">Comment</label>
+                                <textarea name="comment" class="w-full p-2 border rounded border-gray-400" rows="3"></textarea>
+                            </div>
+
+                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                Create Receipt
+                            </button>
+                            <!-- File Upload Section -->
+<div class="bg-white p-6 rounded-lg shadow mb-6">
+    <h3 class="text-lg font-semibold mb-4">Upload Documents & Images</h3>
+    <form action="{{ url_for('doctor.upload_files', appointment_id=appointment._id) }}" 
+          method="POST" 
+          enctype="multipart/form-data" 
+          class="space-y-4">
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 mb-2">Document Type</label>
+            <select name="document_type" class="w-full p-2 border rounded border-gray-400" required>
+                <option value="medical_report">Medical Report</option>
+                <option value="lab_result">Lab Result</option>
+                <option value="prescription">Prescription</option>
+                <option value="xray">X-Ray</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 mb-2">Upload File</label>
+            <input type="file" 
+                   name="file" 
+                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
+                   class="w-full p-2 border rounded border-gray-400"
+                   required>
+            <p class="text-sm text-gray-500 mt-1">
+                Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max size: 5MB)
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 mb-2">Description</label>
+            <textarea name="description" 
+                      class="w-full p-2 border rounded border-gray-400" 
+                      rows="2"></textarea>
+        </div>
+
+        <button type="submit" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Upload File
+        </button>
+    </form>
+</div>
+
+<!-- Display Uploaded Files -->
+<div class="mt-8">
+    <h3 class="text-xl font-semibold mb-4">Uploaded Documents & Images</h3>
+    <div class="space-y-4">
+        {% for file in uploaded_files %}
+        <div class="border rounded-lg p-4 border-gray-400">
+            <div class="flex justify-between items-center">
+                <div>
+                    <span class="font-medium">{{ file.document_type|title }}</span>
+                    <p class="text-sm text-gray-600">{{ file.description }}</p>
+                    <span class="text-sm text-gray-500">
+                        Uploaded on: {{ file.upload_date.strftime('%B %d, %Y') }}
+                    </span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('doctor.view_file', file_id=file._id) }}" 
+                       class="text-blue-500 hover:text-blue-700">
+                        View
+                    </a>
+                    <form action="{{ url_for('doctor.delete_file', file_id=file._id) }}" 
+                          method="POST" 
+                          class="inline">
+                        <button type="submit" 
+                                class="text-red-500 hover:text-red-700"
+                                onclick="return confirm('Are you sure you want to delete this file?')">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Previous Receipts -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4">Previous Receipts</h3>
+                        <div class="space-y-4">
+                            {% for receipt in previous_receipts %}
+                            <div class="border rounded-lg p-4 border-gray-400">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">
+                                        Date: {{ receipt.created_at.strftime('%B %d, %Y') }}
+                                    </span>
+                                    <span class="text-gray-600">
+                                        Total: ${{ "%.2f"|format(receipt.total_amount) }}
+                                    </span>
+                                </div>
+                                {% if receipt.comment %}
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <strong>Comment:</strong> {{ receipt.comment }}
+                                </div>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <a href="{{ url_for('doctor.receipt.view_receipt', receipt_id=receipt._id) }}"
+                                    class="text-blue-500 hover:text-blue-700 text-sm">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+        <!-- Visit Notes Tab Content -->
+        <div id="visitTab" class="tab-content hidden">
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <textarea id="visitNotes" class="w-full p-3 border rounded-lg border-gray-400" rows="4" 
+                          placeholder="Add notes about the current visit..."></textarea>
+                <button onclick="saveVisitNotes()" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Save Notes
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <h4 class="font-medium mb-2">Previous Visit History</h4>
+                <div class="space-y-3">
+                    {% for visit in visit_history %}
+                    <div class="bg-white border rounded-lg p-3 border-gray-300">
+                        <div class="flex justify-between">
+                            <p class="font-medium">{{ visit.date.strftime('%B %d, %Y') }}</p>
+                            <span class="text-sm text-gray-500">Dr. {{ visit.doctor_name }}</span>
+                        </div>
+                        <p class="text-gray-600 mt-1">{{ visit.notes }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        
+
+        <!-- Billing Tab Content -->
+        <div id="billingTab" class="tab-content hidden">
+            <!-- Billing Summary -->
+            <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-green-800 mb-2">Total Paid</h3>
+                    <p class="text-2xl font-bold text-green-600">
+                        ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'paid')|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-yellow-800 mb-2">Pending</h3>
+                    <p class="text-2xl font-bold text-yellow-600">
+                        ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'pending')|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-red-800 mb-2">Overdue</h3>
+                    <p class="text-2xl font-bold text-red-600">
+                        ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'overdue')|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Total Amount</h3>
+                    <p class="text-2xl font-bold text-gray-600">
+                        ${{ "%.2f"|format(billings|sum(attribute='amount')) }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Billing Records -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Treatment</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for billing in billings %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ billing.created_at.strftime('%Y-%m-%d') }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ billing.treatment_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${{ "%.2f"|format(billing.amount) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-sm rounded-full
+                                    {% if billing.status == 'paid' %}
+                                        bg-green-100 text-green-800
+                                    {% elif billing.status == 'pending' %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% else %}
+                                        bg-red-100 text-red-800
+                                    {% endif %}">
+                                    {{ billing.status|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="editBilling('{{ billing._id }}')" 
+                                        class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                                <button onclick="confirmDeleteBilling('{{ billing._id }}')"
+                                        class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+        <h3 class="text-lg font-medium mb-4">Confirm Delete</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete this record?</p>
+        <div class="flex justify-end space-x-4">
+            <button onclick="hideDeleteModal()" 
+                    class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+                Cancel
+            </button>
+            <button onclick="executeDelete()" 
+                    class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    // Tab Switching
+    function switchTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        
+        // Show selected tab content and activate button
+        document.getElementById(tabName + 'Tab').classList.remove('hidden');
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+    
+// Visit Notes
+async function saveVisitNotes() {
+        const notes = document.getElementById('visitNotes').value;
+        if (!notes.trim()) {
+            alert('Please enter visit notes');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/doctor/visit/notes/{{ appointment._id }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notes })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                alert('Notes saved successfully!');
+                location.reload();
+            } else {
+                throw new Error(data.message || 'Failed to save notes');
+            }
+        } catch (error) {
+            console.error('Error saving notes:', error);
+            alert('Failed to save notes: ' + error.message);
+        }
+    }
+    
+
+
+    // Delete Functionality
+    let deleteItemId = null;
+    let deleteItemType = null;
+    
+    function confirmDeleteBilling(billingId) {
+        deleteItemId = billingId;
+        deleteItemType = 'billing';
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        deleteItemId = null;
+        deleteItemType = null;
+    }
+    
+    async function executeDelete() {
+        if (!deleteItemId || !deleteItemType) return;
+        
+        try {
+            const response = await fetch(`/doctor/${deleteItemType}/${deleteItemId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert(`${deleteItemType.charAt(0).toUpperCase() + deleteItemType.slice(1)} deleted successfully!`);
+                location.reload();
+            }
+        } catch (error) {
+            console.error(`Error deleting ${deleteItemType}:`, error);
+            alert(`Failed to delete ${deleteItemType}`);
+        }
+        
+        hideDeleteModal();
+    }
+    
+    // End Appointment
+    async function endAppointment(appointmentId) {
+        if (!confirm('Are you sure you want to end this appointment?')) return;
+        
+        try {
+            const response = await fetch(`/doctor/appointment/end/${appointmentId}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                alert('Appointment completed successfully!');
+                window.location.href = '/doctor/dashboard';
+            }
+        } catch (error) {
+            console.error('Error ending appointment:', error);
+            alert('Failed to end appointment');
+        }
+    }
+    
+    // Billing Functions
+    let editingBillingId = null;
+    
+    function editBilling(billingId) {
+        editingBillingId = billingId;
+        // You would typically populate a modal with the billing details here
+        // This would require adding a billing edit modal to your HTML
+        alert('Editing functionality to be implemented');
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // console.log('Prescriptions loaded:', document.querySelectorAll('.medicine-entry').length);
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'billing') {
+            switchTab('billing');
+        }
+    });
+
+    // Add this to the existing <script> section
+    function addReceiptItem() {
+        const container = document.getElementById('receiptItems');
+        const newItem = document.createElement('div');
+        newItem.className = 'receipt-item flex gap-4';
+        newItem.innerHTML = `
+            <div class="flex-1">
+                <input type="text" name="items[]" class="w-full p-2 border rounded" 
+                    placeholder="Item description" required>
+            </div>
+            <div class="w-32">
+                <input type="number" name="amounts[]" step="0.01" class="w-full p-2 border rounded" 
+                    placeholder="Amount" required>
+            </div>
+            <button type="button" class="text-red-500 hover:text-red-700" onclick="removeReceiptItem(this)">
+                Remove
+            </button>
+        `;
+        container.appendChild(newItem);
+    }
+
+    function removeReceiptItem(button) {
+        const items = document.getElementsByClassName('receipt-item');
+        if (items.length > 1) {
+            button.closest('.receipt-item').remove();
+        }
+    }
+</script>
+
+
+    {% endblock %}

@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex gap-4">
+<!-- Time slots and appointments -->
+<div class="w-2/3 h-[1200px] bg-white rounded-xl shadow-lg">
+    <!-- Header Section -->
+    <div class="sticky top-0 bg-white p-6 border-b border-gray-100 z-10">
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-800">
+                Appointments for {{ selected_date }}
+            </h2>
+
+        </div>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="overflow-y-auto h-[calc(1200px-88px)]">
+        <div class="grid grid-cols-[120px_1fr] gap-4 p-6">
+            {% for time in time_slots %}
+            <div class="group">
+                <div class="p-3 bg-gray-50 rounded-lg font-medium text-gray-700 group-hover:bg-gray-100 transition-colors sticky top-0">
+                    {{ time }}
+                </div>
+            </div>
+            <div class="relative group">
+                <div class="p-4 bg-gray-50 rounded-lg min-h-[80px] group-hover:bg-gray-100 transition-all">
+                    {% for appt in appointments if appt.time == time %}
+                    <div class="bg-white rounded-lg p-4 shadow-sm mb-3 group/appt hover:shadow-md transition-all border border-gray-100">
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="space-y-3 flex-1">
+                                {% for patient in patients if patient.patient_id == appt.patient_id %}
+                                <div class="flex items-center gap-3">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                                        {{ patient.name[:2].upper() }}
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ patient.name }}</div>
+                                        <div class="text-sm text-gray-500">ID: {{ appt.patient_id }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                    <div class="flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                        </svg>
+                                        {{ appt.duration }} minutes
+                                    </div>
+                                    {% if appt.doctor_name %}
+                                    <div class="flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                        </svg>
+                                        Dr. {{ appt.doctor_name }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if appt.notes %}
+                                <div class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                    {{ appt.notes }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex gap-2 opacity-0 group-hover/appt:opacity-100 transition-opacity">
+                                <button onclick="showEditAppointment('{{ appt._id }}')"
+                                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                </button>
+                                <button onclick="deleteAppointment('{{ appt._id }}')"
+                                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <button onclick="showAddAppointment('{{ selected_date }}', '{{ time }}')"
+                            class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Appointment
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="w-full sm:w-1/3 p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
+    <!-- Calendar Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-4">
+            <button id="prevMonth" class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200" title="Previous Month">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div class="flex flex-col">
+                <h2 id="calendarMonth" class="text-2xl font-bold text-gray-800"></h2>
+                <span id="calendarYear" class="text-sm font-medium text-gray-500"></span>
+            </div>
+        </div>
+        <button id="nextMonth" class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200" title="Next Month">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Week Days Header -->
+    <div class="grid grid-cols-7 mb-4">
+        <div class="text-sm font-semibold text-gray-500 text-center">Mon</div>
+        <div class="text-sm font-semibold text-gray-500 text-center">Tue</div>
+        <div class="text-sm font-semibold text-gray-500 text-center">Wed</div>
+        <div class="text-sm font-semibold text-gray-500 text-center">Thu</div>
+        <div class="text-sm font-semibold text-gray-500 text-center">Fri</div>
+        <div class="text-sm font-semibold text-blue-500 text-center">Sat</div>
+        <div class="text-sm font-semibold text-red-500 text-center">Sun</div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div id="calendarGrid" class="grid grid-cols-7 gap-2 "></div>
+
+    <!-- Quick Navigation -->
+    <div class="mt-8 flex items-center justify-between">
+        <button id="goToToday" class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+            Today
+        </button>
+
+        <div class="flex gap-2">
+            <select id="monthSelect" class="text-sm font-medium text-gray-600 bg-gray-50 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+            <select id="yearSelect" class="text-sm font-medium text-gray-600 bg-gray-50 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                <!-- Dynamically populated -->
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+    const calendarMonthEl = document.getElementById('calendarMonth');
+    const calendarYearEl = document.getElementById('calendarYear');
+    const calendarGridEl = document.getElementById('calendarGrid');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const goToTodayBtn = document.getElementById('goToToday');
+
+    const today = new Date();
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+
+    // Populate year dropdown (last 5 years + next 5 years)
+    for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+
+    function renderCalendar(month, year) {
+        calendarMonthEl.textContent = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(year, month));
+        calendarYearEl.textContent = year;
+
+        monthSelect.value = month;
+        yearSelect.value = year;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        calendarGridEl.innerHTML = '';
+
+        // Fill empty days before the first day of the month
+        for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'aspect-square bg-gray-50/50 rounded-xl';
+            calendarGridEl.appendChild(emptyCell);
+        }
+
+        // Fill days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayCell = document.createElement('div');
+            dayCell.className = `aspect-square relative group ${
+                day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+                    ? 'bg-blue-50 border-2 border-blue-500'
+                    : 'hover:bg-gray-50 border border-transparent hover:border-gray-200'
+            }`;
+            dayCell.innerHTML = `
+                <div class="absolute top-2 left-2 ${
+                    day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+                        ? 'text-blue-600 font-bold'
+                        : 'text-gray-700 font-medium'
+                }">${day}</div>`;
+            calendarGridEl.appendChild(dayCell);
+        }
+    }
+
+    function updateCalendar(delta) {
+        currentMonth += delta;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear);
+    }
+
+    // Event listeners
+    prevMonthBtn.addEventListener('click', () => updateCalendar(-1));
+    nextMonthBtn.addEventListener('click', () => updateCalendar(1));
+    goToTodayBtn.addEventListener('click', () => {
+        currentMonth = today.getMonth();
+        currentYear = today.getFullYear();
+        renderCalendar(currentMonth, currentYear);
+    });
+
+    monthSelect.addEventListener('change', (e) => {
+        currentMonth = parseInt(e.target.value);
+        renderCalendar(currentMonth, currentYear);
+    });
+
+    yearSelect.addEventListener('change', (e) => {
+        currentYear = parseInt(e.target.value);
+        renderCalendar(currentMonth, currentYear);
+    });
+
+    // Initial render
+    renderCalendar(currentMonth, currentYear);
+</script>
+
+<!-- Add/Edit Appointment Modal -->
+<div id="appointmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96 ">
+        <h3 class="text-lg font-semibold mb-4" id="modalTitle">Add Appointment</h3>
+        <form id="appointmentForm" action="{{ url_for('schedule.schedule') }}" method="POST">
+            <input type="hidden" name="date" id="appt_date">
+            <input type="hidden" name="time" id="appt_time">
+            {% if user_role == 'accountant' %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Select Doctor</label>
+                <select name="doctor_id" id="doctor_select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                        <option value="{{ doctor._id }}" {% if selected_doctor == doctor._id|string %}selected{% endif %}>
+                            Dr. {{ doctor.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Patient</label>
+                <select name="patient_id" id="appt_patient" class="w-full border rounded p-2">
+                    {% for patient in patients %}
+                    <option value="{{ patient.patient_id }}">{{ patient.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Duration (minutes)</label>
+                <select name="duration" id="appt_duration" class="w-full border rounded p-2">
+                    <option value="30">30</option>
+                    <option value="60">60</option>
+                    <option value="90">90</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Notes</label>
+                <textarea name="notes" id="appt_notes" 
+                          class="w-full border rounded p-2 h-20 resize-none"></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="hideModal()" 
+                        class="px-4 py-2 border rounded hover:bg-gray-50">Cancel</button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+function showAddAppointment(date, time) {
+    document.getElementById('modalTitle').textContent = 'Add Appointment';
+    document.getElementById('appt_date').value = date;
+    document.getElementById('appt_time').value = time;
+    document.getElementById('appointmentForm').action = "{{ url_for('schedule.schedule') }}";
+    document.getElementById('appointmentForm').method = 'POST';
+    document.getElementById('appointmentModal').classList.remove('hidden');
+
+}
+
+function showEditAppointment(appointmentId) {
+    fetch(`/api/appointment/${appointmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const appt = data.appointment;
+                document.getElementById('modalTitle').textContent = 'Edit Appointment';
+                document.getElementById('appt_date').value = appt.date;
+                document.getElementById('appt_time').value = appt.time;
+                document.getElementById('appt_patient').value = appt.patient_id;
+                document.getElementById('appt_duration').value = appt.duration;
+                document.getElementById('appt_notes').value = appt.notes || '';
+                
+                const form = document.getElementById('appointmentForm');
+                form.action = `/appointment/edit/${appointmentId}`;
+                form.method = 'POST';
+                
+                document.getElementById('appointmentModal').classList.remove('hidden');
+            }
+        });
+}
+
+function deleteAppointment(appointmentId) {
+    if (confirm('Are you sure you want to delete this appointment?')) {
+        fetch(`/appointment/delete/${appointmentId}`, {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    }
+}
+
+function hideModal() {
+    document.getElementById('appointmentModal').classList.add('hidden');
+    document.getElementById('appointmentForm').reset();
+}
+
+// Close modal when clicking outside
+document.getElementById('appointmentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideModal();
+    }
+});
+document.getElementById('doctor_select')?.addEventListener('change', function () {
+    const doctorId = this.value;
+
+    if (doctorId) {
+        // Use fetch to dynamically update patients based on selected doctor
+        fetch(`/api/patients/${doctorId}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === 'success') {
+                    const patientSelect = document.getElementById('appt_patient');
+                    patientSelect.innerHTML = ''; // Clear existing options
+
+                    data.patients.forEach((patient) => {
+                        const option = document.createElement('option');
+                        option.value = patient.patient_id;
+                        option.textContent = patient.name;
+                        patientSelect.appendChild(option);
+                    });
+                } else {
+                    console.error('Error fetching patients:', data.message);
+                }
+            })
+            .catch((error) => console.error('Error:', error));
+    } else {
+        // Handle "All Doctors" or no selection case
+        const patientSelect = document.getElementById('appt_patient');
+        patientSelect.innerHTML = '<option value="">Select a Patient</option>';
+    }
+});
+
+</script>
+{% endblock %}

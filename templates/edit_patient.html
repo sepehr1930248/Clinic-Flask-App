@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Patient: {{ patient.name }}</h2>
+    
+    <form action="{{ url_for('patient.edit_patient', patient_id=patient.patient_id) }}" method="POST" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="name" name="name" required value="{{ patient.name }}"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required value="{{ patient.phone }}"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label for="birth_date" class="block text-sm font-medium text-gray-700">Birth Date</label>
+                <input type="date" id="birth_date" name="birth_date" required 
+                       value="{{ patient.birth_date.strftime('%Y-%m-%d') if patient.birth_date else '' }}"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label for="doctor_name" class="block text-sm font-medium text-gray-700">Doctor Name</label>
+                <input type="text" id="doctor_name" name="doctor_name" required value="{{ patient.doctor_name }}"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="border-t pt-4 mt-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Expert Details</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="last_visit" class="block text-sm font-medium text-gray-700">Last Visit Date</label>
+                    <input type="date" id="last_visit" name="last_visit"
+                           value="{{ patient.expert_details.last_visit.strftime('%Y-%m-%d') if patient.expert_details.last_visit else '' }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="therapy_method" class="block text-sm font-medium text-gray-700">Therapy Method</label>
+                    <input type="text" id="therapy_method" name="therapy_method"
+                           value="{{ patient.expert_details.therapy_method }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="medicine" class="block text-sm font-medium text-gray-700">Prescribed Medicine</label>
+                    <input type="text" id="medicine" name="medicine"
+                           value="{{ patient.expert_details.medicine }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Additional Notes</label>
+                    <textarea id="notes" name="notes" rows="3"
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ patient.expert_details.notes }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+            <a href="{{ url_for('patient.view_patient', patient_id=patient.patient_id) }}" 
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">Cancel</a>
+            <button type="submit" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,542 @@
+<!-- templates/doctor/visit.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Patient Summary Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-800">Patient Visit - {{ patient.name }}</h2>
+            <div class="flex gap-2">
+                {% if appointment.status != 'completed' %}
+                <button onclick="endAppointment('{{ appointment._id }}')" 
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                    End Appointment
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button onclick="switchTab('visit')" class="tab-button active" data-tab="visit">
+                        Visit Notes
+                    </button>
+                    <button onclick="switchTab('billing')" class="tab-button" data-tab="billing">
+                        Billing
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Visit Notes Tab Content -->
+        <div id="visitTab" class="tab-content active">
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <textarea id="visitNotes" class="w-full p-3 border rounded-lg" rows="4" 
+                          placeholder="Add notes about the current visit..."></textarea>
+                <button onclick="saveVisitNotes()" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Save Notes
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <h4 class="font-medium mb-2">Previous Visit History</h4>
+                <div class="space-y-3">
+                    {% for visit in visit_history %}
+                    <div class="bg-white border rounded-lg p-3">
+                        <div class="flex justify-between">
+                            <p class="font-medium">{{ visit.date.strftime('%B %d, %Y') }}</p>
+                            <span class="text-sm text-gray-500">Dr. {{ visit.doctor_name }}</span>
+                        </div>
+                        <p class="text-gray-600 mt-1">{{ visit.notes }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+<!-- Prescription Tab Content -->
+ <!-- 
+<div id="prescriptionTab" class="tab-content hidden">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium">Current Prescription</h3>
+        <button onclick="openPrescriptionModal()"
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+            Add Prescription
+        </button>
+    </div>
+-->
+<!-- Current Prescription Section -->
+<!-- <div id="currentPrescriptions" class="space-y-3">
+    {% if prescriptions %}
+        {% for prescription in prescriptions %}
+        <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium">
+                    {% if prescription.prescribed_date %}
+                        Prescribed on {{ prescription.prescribed_date.strftime('%B %d, %Y') }}
+                    {% else %}
+                        Date not available
+                    {% endif %}
+                </h4>
+                <button onclick="deletePrescription('{{ prescription._id }}')"
+                        class="text-red-500 hover:text-red-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-2">
+                {% if prescription.medicines %}
+                    {% for medicine in prescription.medicines %}
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <div>
+                            <p class="font-medium">{{ medicine.name|default('No name') }}</p>
+                            <p class="text-sm text-gray-600">{{ medicine.dosage|default('No dosage') }} - {{ medicine.frequency|default('No frequency') }}</p>
+                        </div>
+                        <p class="text-sm text-gray-500">Duration: {{ medicine.duration|default('Not specified') }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-sm text-gray-500">No medicines listed</p>
+                {% endif %}
+            </div>
+            {% if prescription.notes %}
+            <p class="mt-2 text-sm text-gray-600">Notes: {{ prescription.notes }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-gray-500">No prescriptions found</p>
+    {% endif %}
+</div> -->
+
+<!-- Patient's Prescription History Section -->
+<!-- <div class="mt-8">
+    <h3 class="text-lg font-medium mb-4">Patient's Prescription History</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicines</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% if prescriptions %}
+                    {% for prescription in prescriptions %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if prescription.prescribed_date %}
+                                {{ prescription.prescribed_date.strftime('%B %d, %Y') }}
+                            {% else %}
+                                Date not available
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ prescription.doctor_name|default('Unknown Doctor') }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if prescription.medicines %}
+                                <ul class="list-disc list-inside">
+                                    {% for medicine in prescription.medicines %}
+                                    <li>{{ medicine.name|default('No name') }} - {{ medicine.dosage|default('No dosage') }} ({{ medicine.frequency|default('No frequency') }})</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No medicines listed</p>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {{ prescription.notes|default('-') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="viewPrescriptionDetails('{{ prescription._id }}')"
+                                    class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                View
+                            </button>
+                            <button onclick="printPrescription('{{ prescription._id }}')"
+                                    class="text-green-600 hover:text-green-900">
+                                Print
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No prescription history available
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+ </div>
+</div> -->
+
+        <!-- Billing Tab Content -->
+        <div id="billingTab" class="tab-content hidden">
+            <!-- Billing Summary -->
+            <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-green-800 mb-2">Total Paid</h3>
+                    <p class="text-2xl font-bold text-green-600">
+                        ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'paid')|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-yellow-800 mb-2">Pending</h3>
+                    <p class="text-2xl font-bold text-yellow-600">
+                        ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'pending')|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-red-800 mb-2">Overdue</h3>
+                    <p class="text-2xl font-bold text-red-600">
+                        ${{ "%.2f"|format(billings|selectattr('status', 'equalto', 'overdue')|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Total Amount</h3>
+                    <p class="text-2xl font-bold text-gray-600">
+                        ${{ "%.2f"|format(billings|sum(attribute='amount')) }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Billing Records -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Treatment</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for billing in billings %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ billing.created_at.strftime('%Y-%m-%d') }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ billing.treatment_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${{ "%.2f"|format(billing.amount) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-sm rounded-full
+                                    {% if billing.status == 'paid' %}
+                                        bg-green-100 text-green-800
+                                    {% elif billing.status == 'pending' %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% else %}
+                                        bg-red-100 text-red-800
+                                    {% endif %}">
+                                    {{ billing.status|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="editBilling('{{ billing._id }}')" 
+                                        class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                                <button onclick="confirmDeleteBilling('{{ billing._id }}')"
+                                        class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prescription Modal -->
+<!-- <div id="prescriptionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold">New Prescription</h3>
+            <button onclick="closePrescriptionModal()" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+
+        <form id="prescriptionForm" class="space-y-6">
+            <div id="medicines" class="space-y-4">
+                <div class="medicine-entry grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Medicine</label>
+                        <input type="text" name="medicine_name[]" required 
+                               class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Dosage</label>
+                        <input type="text" name="dosage[]" required 
+                               class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Frequency</label>
+                        <input type="text" name="frequency[]" required 
+                               class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Duration</label>
+                        <input type="text" name="duration[]" required 
+                               class="w-full p-2 border rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" onclick="addMedicine()" class="text-blue-500 hover:text-blue-600">
+                + Add Medicine
+            </button>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Notes</label>
+                <textarea name="notes" class="w-full p-3 border rounded-lg" rows="3"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closePrescriptionModal()" 
+                        class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                    Save Prescription
+                </button>
+            </div>
+        </form>
+    </div>
+</div> -->
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+        <h3 class="text-lg font-medium mb-4">Confirm Delete</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete this record?</p>
+        <div class="flex justify-end space-x-4">
+            <button onclick="hideDeleteModal()" 
+                    class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+                Cancel
+            </button>
+            <button onclick="executeDelete()" 
+                    class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    // Tab Switching
+    function switchTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        
+        // Show selected tab content and activate button
+        document.getElementById(tabName + 'Tab').classList.remove('hidden');
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+    
+// Visit Notes
+async function saveVisitNotes() {
+        const notes = document.getElementById('visitNotes').value;
+        if (!notes.trim()) {
+            alert('Please enter visit notes');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/doctor/visit/notes/{{ appointment._id }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notes })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                alert('Notes saved successfully!');
+                location.reload();
+            } else {
+                throw new Error(data.message || 'Failed to save notes');
+            }
+        } catch (error) {
+            console.error('Error saving notes:', error);
+            alert('Failed to save notes: ' + error.message);
+        }
+    }
+    
+    // Prescription Modal Functions
+    // function openPrescriptionModal() {
+    //     document.getElementById('prescriptionModal').classList.remove('hidden');
+    // }
+    
+    // function closePrescriptionModal() {
+    //     document.getElementById('prescriptionModal').classList.add('hidden');
+    //     document.getElementById('prescriptionForm').reset();
+    // }
+    
+    // function addMedicine() {
+    //     const medicinesDiv = document.getElementById('medicines');
+    //     const newEntry = medicinesDiv.children[0].cloneNode(true);
+        
+    //     // Clear all input values in the cloned entry
+    //     newEntry.querySelectorAll('input').forEach(input => {
+    //         input.value = '';
+    //     });
+        
+    //     medicinesDiv.appendChild(newEntry);
+    // }
+    
+
+
+//     document.getElementById('prescriptionForm').addEventListener('submit', async (e) => {
+//     e.preventDefault();
+    
+//     const medicines = [];
+//     const medicineEntries = document.querySelectorAll('.medicine-entry');
+    
+//     medicineEntries.forEach(entry => {
+//         const name = entry.querySelector('[name="medicine_name[]"]').value;
+//         const dosage = entry.querySelector('[name="dosage[]"]').value;
+//         const frequency = entry.querySelector('[name="frequency[]"]').value;
+//         const duration = entry.querySelector('[name="duration[]"]').value;
+        
+//         if (name && dosage && frequency && duration) {
+//             medicines.push({ name, dosage, frequency, duration });
+//         }
+//     });
+    
+//     if (medicines.length === 0) {
+//         alert('Please add at least one medicine');
+//         return;
+//     }
+    
+//     const notes = document.querySelector('[name="notes"]').value;
+    
+//     try {
+//         const response = await fetch(`/doctor/prescription/{{ appointment._id }}`, {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//             },
+//             body: JSON.stringify({
+//                 medicines,
+//                 notes,
+//                 doctor_name: '{{ current_user.name }}'  
+//             })
+//         });
+        
+//         const data = await response.json();
+//         if (response.ok) {
+//             alert('Prescription saved successfully!');
+//             location.reload();
+//         } else {
+//             throw new Error(data.message || 'Failed to save prescription');
+//         }
+//     } catch (error) {
+//         console.error('Error saving prescription:', error);
+//         alert('Failed to save prescription: ' + error.message);
+//     }
+// });
+
+
+    // Delete Functionality
+    let deleteItemId = null;
+    let deleteItemType = null;
+    
+    function confirmDeleteBilling(billingId) {
+        deleteItemId = billingId;
+        deleteItemType = 'billing';
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function deletePrescription(prescriptionId) {
+        deleteItemId = prescriptionId;
+        deleteItemType = 'prescription';
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        deleteItemId = null;
+        deleteItemType = null;
+    }
+    
+    async function executeDelete() {
+        if (!deleteItemId || !deleteItemType) return;
+        
+        try {
+            const response = await fetch(`/doctor/${deleteItemType}/${deleteItemId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert(`${deleteItemType.charAt(0).toUpperCase() + deleteItemType.slice(1)} deleted successfully!`);
+                location.reload();
+            }
+        } catch (error) {
+            console.error(`Error deleting ${deleteItemType}:`, error);
+            alert(`Failed to delete ${deleteItemType}`);
+        }
+        
+        hideDeleteModal();
+    }
+    
+    // End Appointment
+    async function endAppointment(appointmentId) {
+        if (!confirm('Are you sure you want to end this appointment?')) return;
+        
+        try {
+            const response = await fetch(`/doctor/appointment/end/${appointmentId}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                alert('Appointment completed successfully!');
+                window.location.href = '/doctor/dashboard';
+            }
+        } catch (error) {
+            console.error('Error ending appointment:', error);
+            alert('Failed to end appointment');
+        }
+    }
+    
+    // Billing Functions
+    let editingBillingId = null;
+    
+    function editBilling(billingId) {
+        editingBillingId = billingId;
+        // You would typically populate a modal with the billing details here
+        // This would require adding a billing edit modal to your HTML
+        alert('Editing functionality to be implemented');
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // console.log('Prescriptions loaded:', document.querySelectorAll('.medicine-entry').length);
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'billing') {
+            switchTab('billing');
+        }
+    });
+</script>
+
+
+    {% endblock %}

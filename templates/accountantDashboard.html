@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-6">Accountant Dashboard</h1>
+    
+    <!-- Schedule Appointment Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Schedule Appointment</h2>
+        <form action="{{ url_for('accountant.schedule_appointment') }}" method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Doctor</label>
+                    <select name="doctor_id" id="doctor_select" required class="w-full p-2 border rounded">
+                        <option value="">Select a Doctor</option>
+                        {% for doctor in doctors %}
+                            <option value="{{ doctor._id }}">{{ doctor.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Patient Name</label>
+                    <select name="patient_id" id="patient_select" required class="w-full p-2 border rounded" disabled>
+                        <option value="">Select a Patient</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Date</label>
+                    <input type="date" name="date" required 
+                           class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Time</label>
+                    <input type="time" name="time" required 
+                           class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Duration (minutes)</label>
+                    <input type="number" name="duration" value="30" required 
+                           class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Notes</label>
+                    <textarea name="notes" class="w-full p-2 border rounded"></textarea>
+                </div>
+            </div>
+            <button type="submit" 
+                    class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Schedule Appointment
+            </button>
+        </form>
+    </div>
+    
+    <!-- Upcoming Appointments -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Upcoming Appointments</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="text-left p-2">Date</th>
+                        <th class="text-left p-2">Time</th>
+                        <th class="text-left p-2">Patient Name</th>
+                        <th class="text-left p-2">Doctor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                    <tr>
+                        <td class="p-2">{{ appointment.date.strftime('%Y-%m-%d') }}</td>
+                        <td class="p-2">{{ appointment.time }}</td>
+                        <td class="p-2">{{ appointment.patient_name }}</td>
+                        <td class="p-2">{{ appointment.doctor_name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add this script section at the bottom of your template -->
+<script>
+document.getElementById('doctor_select').addEventListener('change', function() {
+    const doctorId = this.value;
+    const patientSelect = document.getElementById('patient_select');
+    
+    if (doctorId) {
+        // Enable the patient select
+        patientSelect.disabled = false;
+        
+        // Fetch patients for selected doctor
+        fetch(`/api/patients/${doctorId}`)
+            .then(response => response.json())
+            .then(data => {
+                patientSelect.innerHTML = '<option value="">Select a Patient</option>';
+                data.patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.patient_id;
+                    option.textContent = patient.name;
+                    patientSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching patients:', error);
+                patientSelect.innerHTML = '<option value="">Error loading patients</option>';
+            });
+    } else {
+        // Disable and reset the patient select if no doctor is selected
+        patientSelect.disabled = true;
+        patientSelect.innerHTML = '<option value="">Select a Patient</option>';
+    }
+});
+</script>
+{% endblock %}
